@@ -2,18 +2,21 @@
 from app.domain.limits import LimitCheckContext
 from app.support.types import CheckResult, money
 
-
 class LimitsService:
     def __init__(self):
         self.transaction_maximum = money("500")
         self.daily_maximum = money("1000")
 
+    @staticmethod
+    def _exceeds_limit(value, maximum) -> bool:
+        return value.amount > maximum.amount
+
     def check(self, context: LimitCheckContext) -> CheckResult:
         context.amount.same_currency(self.transaction_maximum)
         context.amount.same_currency(self.daily_maximum)
-        if context.amount.amount > self.transaction_maximum.amount:
+        if self._exceeds_limit(context.amount, self.transaction_maximum):
             return CheckResult(False, "TRANSACTION_LIMIT_EXCEEDED")
-        if context.projected_today().amount > self.daily_maximum.amount:
+        if self._exceeds_limit(context.projected_today(), self.daily_maximum):
             return CheckResult(False, "DAILY_LIMIT_EXCEEDED")
         return CheckResult(True)
 

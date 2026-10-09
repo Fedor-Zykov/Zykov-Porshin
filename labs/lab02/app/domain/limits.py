@@ -9,10 +9,10 @@ class LimitCheckContext:
             raise DomainError("INVALID_CONTEXT")
         if type(contactless) is not bool:
             raise DomainError("INVALID_CONTEXT")
-        if amount.amount == 0:
-            raise DomainError("INVALID_AMOUNT")
-        amount.same_currency(spent_today)
-        amount.same_currency(spent_month)
+        if amount.amount <= 0:
+                raise DomainError("INVALID_AMOUNT")
+        for spent in (spent_today, spent_month):
+            amount.same_currency(spent)
         if spent_today.amount > spent_month.amount:
             raise DomainError("INVALID_CONTEXT")
         self._amount = amount

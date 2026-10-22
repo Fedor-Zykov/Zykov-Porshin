@@ -13,8 +13,17 @@ class LimitRule(ABC):
         self._maximum = maximum
 
     @property
-    def maximum(self):
+    def maximum(self) -> Money:
         return self._maximum
+
+    # Общая проверка валюты и превышения максимальной суммы.
+    def _check_amount(self, amount: Money, code: str) -> CheckResult:
+        amount.same_currency(self.maximum)
+
+        if amount.amount > self.maximum.amount:
+            return CheckResult(False, code)
+
+        return CheckResult(True)
 
     # Каждый наследник обязан реализовать собственную проверку.
     @abstractmethod
@@ -25,21 +34,16 @@ class LimitRule(ABC):
 # Проверка максимальной суммы одной покупки.
 class TransactionLimit(LimitRule):
     def check(self, context: LimitCheckContext) -> CheckResult:
-        context.amount.same_currency(self.maximum)
-
-        if context.amount.amount > self.maximum.amount:
-            return CheckResult(False, "TRANSACTION_LIMIT_EXCEEDED")
-
-        return CheckResult(True)
+        return self._check_amount(
+            context.amount,
+            "TRANSACTION_LIMIT_EXCEEDED",
+        )
 
 
 # Проверка расходов за день с учётом текущей покупки.
 class DailyLimit(LimitRule):
     def check(self, context: LimitCheckContext) -> CheckResult:
-        projected = context.projected_today()
-        projected.same_currency(self.maximum)
-
-        if projected.amount > self.maximum.amount:
-            return CheckResult(False, "DAILY_LIMIT_EXCEEDED")
-
-        return CheckResult(True)
+        return self._check_amount(
+            context.projected_today(),
+            "DAILY_LIMIT_EXCEEDED",
+        )

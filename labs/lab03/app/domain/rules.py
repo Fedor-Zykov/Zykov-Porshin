@@ -47,3 +47,14 @@ class DailyLimit(LimitRule):
             context.projected_today(),
             "DAILY_LIMIT_EXCEEDED",
         )
+# Проверка расходов за неделю с учётом текущей покупки.
+class WeeklyLimit(LimitRule):
+    def check(self, context: LimitCheckContext) -> CheckResult:
+        # Если недельные расходы не переданы, пропускаем это правило.
+        if context.spent_week is None:
+            return CheckResult(True)
+
+        return self._check_amount(
+            context.projected_week(),
+            "WEEKLY_LIMIT_EXCEEDED",
+        )

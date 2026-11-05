@@ -13,7 +13,10 @@ class LimitRule(ABC):
     @property
     def maximum(self) -> Money:
         return self._maximum
-
+    def _check_amount(self, amount: Money, error_code: str) -> CheckResult:
+        if amount.amount > self.maximum.amount:
+            return CheckResult(False, error_code)
+        return CheckResult(True)
     @abstractmethod
     def check(self, context: LimitCheckContext) -> CheckResult:
         raise NotImplementedError
@@ -22,14 +25,10 @@ class LimitRule(ABC):
 class TransactionLimit(LimitRule):
     def check(self, context: LimitCheckContext) -> CheckResult:
         context.amount.same_currency(self.maximum)
-        if context.amount.amount > self.maximum.amount:
-            return CheckResult(False, "TRANSACTION_LIMIT_EXCEEDED")
-        return CheckResult(True)
+        return self._check_amount(context.amount, "TRANSACTION_LIMIT_EXCEEDED")
 
 
 class DailyLimit(LimitRule):
     def check(self, context: LimitCheckContext) -> CheckResult:
         context.amount.same_currency(self.maximum)
-        if context.projected_today().amount > self.maximum.amount:
-            return CheckResult(False, "DAILY_LIMIT_EXCEEDED")
-        return CheckResult(True)
+        return self._check_amount(context.projected_today(), "DAILY_LIMIT_EXCEEDED")

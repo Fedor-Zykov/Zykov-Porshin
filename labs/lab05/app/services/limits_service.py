@@ -22,10 +22,14 @@ class LimitsService:
         return CheckResult(True)  # Все правила пройдены — покупка разрешена
 
     def check_many(self, contexts):
-        raise NotImplementedError("ЛР5: реализуйте LimitsService.check_many по TASK.md")
+        return tuple(self.check(context) for context in contexts)  # Проверяем каждую покупку и возвращаем кортеж результатов
 
     def first_denial(self, contexts):
-        raise NotImplementedError("ЛР5: реализуйте LimitsService.first_denial по TASK.md")
+        for index, context in enumerate(contexts):  # Перебираем покупки с номерами от нуля
+            result = self.check(context)  # Проверяем текущую покупку
+            if not result.allowed:  # Если покупка запрещена
+                return index, result  # Возвращаем номер и результат первого отказа
+        return None  # Отказов нет
 
 
 def check_values(service, amount, spent_today, spent_month, contactless=False):
